@@ -27,39 +27,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Get CCOD filename from HMLR API
+      - name: Download CCOD via HMLR API
         run: |
-          echo "Getting CCOD dataset metadata..."
-          METADATA=$(curl -s \
+          echo "Getting filename..."
+          FILENAME=$(curl -s \
             -H "Authorization: ${{ secrets.HMLR_API_KEY }}" \
             -H "Accept: application/json" \
-            "https://use-land-property-data.service.gov.uk/api/v1/datasets/ccod")
-          echo "Metadata: $METADATA"
-          FILENAME=$(echo $METADATA | python3 -c "
+            "https://use-land-property-data.service.gov.uk/api/v1/datasets/ccod" | \
+            python3 -c "
           import sys, json
           data = json.load(sys.stdin)
           resources = data['result']['resources']
           full = [r for r in resources if 'FULL' in r['file_name']]
           print(full[0]['file_name'])
           ")
-          echo "CCOD filename: $FILENAME"
-          echo "CCOD_FILENAME=$FILENAME" >> $GITHUB_ENV
-
-      - name: Get download URL and download CCOD
-        run: |
-          echo "Getting download URL for ${{ env.CCOD_FILENAME }}..."
-          DOWNLOAD_JSON=$(curl -s \
+          echo "Filename: $FILENAME"
+          echo "Getting download URL and downloading immediately..."
+          curl -s \
             -H "Authorization: ${{ secrets.HMLR_API_KEY }}" \
             -H "Accept: application/json" \
-            "https://use-land-property-data.service.gov.uk/api/v1/datasets/ccod/${{ env.CCOD_FILENAME }}")
-          echo "Download response: $DOWNLOAD_JSON"
-          DOWNLOAD_URL=$(echo $DOWNLOAD_JSON | python3 -c "
-          import sys, json
+            "https://use-land-property-data.service.gov.uk/api/v1/datasets/ccod/$FILENAME" | \
+            python3 -c "
+          import sys, json, subprocess
           data = json.load(sys.stdin)
-          print(data['result']['download_url'])
-          ")
-          echo "Downloading from S3..."
-          curl -L -o /tmp/ccod_full.zip "$DOWNLOAD_URL"
+          url = data['result']['download_url']
+          print('Downloading from:', url[:80])
+          result = subprocess.run(['curl', '-L', '-o', '/tmp/ccod_full.zip', url], capture_output=False)
+          sys.exit(result.returncode)
+          "
           ls -lh /tmp/ccod_full.zip
           unzip -o /tmp/ccod_full.zip -d /tmp/ccod/
           CCOD_FILE=$(find /tmp/ccod/ -name "*.csv" | head -1)
