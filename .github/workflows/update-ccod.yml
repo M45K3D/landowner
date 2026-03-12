@@ -31,7 +31,7 @@ jobs:
       - name: Download CCOD CSV from HMLR
         run: |
           echo "Downloading CCOD data from HMLR..."
-          curl -L --retry 3 --retry-delay 10 \
+          curl -L --max-redirs 20 --retry 3 --retry-delay 10 \
             -o /tmp/ccod_full.zip \
             "https://use-land-property-data.service.gov.uk/datasets/ccod/download/full"
           unzip -o /tmp/ccod_full.zip -d /tmp/ccod/
