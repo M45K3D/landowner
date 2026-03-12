@@ -1,6 +1,5 @@
 import { Pool } from 'pg';
 
-// Module-level singleton — reused across requests in the same Node.js process
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -10,3 +9,11 @@ const pool = new Pool({
 });
 
 export default pool;
+```
+
+Save it, then in terminal:
+```
+cd C:\Users\Param\Desktop\landowner
+git add .
+git commit -m "remove supabase"
+git push
