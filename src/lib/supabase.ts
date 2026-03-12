@@ -9,11 +9,3 @@ const pool = new Pool({
 });
 
 export default pool;
-```
-
-Save it, then run:
-```
-cd C:\Users\Param\Desktop\landowner
-git add .
-git commit -m "fix supabase.ts"
-git push
