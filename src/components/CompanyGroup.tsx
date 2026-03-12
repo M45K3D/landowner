@@ -8,7 +8,6 @@ interface CompanyGroupProps {
   group: CompanyGroupData;
 }
 
-// Format for display and CH links — zero-pad purely numeric numbers to 8 digits (UK standard)
 function formatCompanyNumber(companyNumber: string | null): string | null {
   if (!companyNumber) return null;
   const cleaned = companyNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -20,6 +19,32 @@ function companiesHouseUrl(companyNumber: string | null): string | null {
   const formatted = formatCompanyNumber(companyNumber);
   if (!formatted) return null;
   return `https://find-and-update.company-information.service.gov.uk/company/${formatted}`;
+}
+
+function exportToCSV(group: CompanyGroupData) {
+  const headers = ['Company Name', 'Company Number', 'Title Number', 'Tenure', 'Address', 'Postcode', 'Date Registered', 'HMLR Link'];
+  const rows = group.properties.map(p => [
+    group.company_name,
+    formatCompanyNumber(group.company_number) ?? '',
+    p.title_number ?? '',
+    p.tenure ?? '',
+    p.property_address ?? '',
+    p.postcode ?? '',
+    p.date_added ?? '',
+    hmlrUrl(p.title_number ?? ''),
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${group.company_name.replace(/[^a-z0-9]/gi, '_')}_properties.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function CompanyGroup({ group }: CompanyGroupProps) {
@@ -94,18 +119,35 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
           </div>
         </div>
 
-        {/* Chevron */}
-        <div className={`shrink-0 mt-0.5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+        <div className="flex items-center gap-2 shrink-0 mt-0.5">
+          {/* CSV Export button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); exportToCSV(group); }}
+            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400
+              bg-slate-800 border border-slate-700 hover:border-emerald-700 px-2 py-1 rounded
+              transition-colors"
+            title="Export to CSV"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            CSV
+          </button>
+
+          {/* Chevron */}
+          <div className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>
+            <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
       </button>
 
       {/* Properties panel */}
       {expanded && (
         <div className="border-t border-slate-800">
-          {/* Desktop: proper <table> with <tr><td> rows — no divs inside tbody */}
+          {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -121,7 +163,7 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
               <tbody>
                 {group.properties.map((p) => (
                   <tr key={p.id}
-                    className="border-b border-slate-800 hover:bg-slate-800/40 transition-colors group">
+                    className="border-b border-slate-800 hover:bg-slate-800/40 transition-colors">
                     <td className="py-3 px-4 text-sm text-slate-300 max-w-xs">
                       <span className="block truncate" title={p.property_address || undefined}>
                         {p.property_address || '—'}
@@ -137,9 +179,7 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
                     <td className="py-3 px-4 text-xs text-slate-400 whitespace-nowrap">{formatDate(p.date_added)}</td>
                     <td className="py-3 px-4">
                       <a href={hmlrUrl(p.title_number)} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300
-                          transition-colors"
-                        aria-label={`View title ${p.title_number} on HMLR`}>
+                        className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
                         HMLR
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -153,7 +193,7 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
             </table>
           </div>
 
-          {/* Mobile: plain div list — no table markup */}
+          {/* Mobile list */}
           <div className="md:hidden p-3 space-y-2">
             {group.properties.map((p) => (
               <PropertyCard key={p.id} property={p} />
