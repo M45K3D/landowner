@@ -28,14 +28,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download CCOD CSV from HMLR
+      - name: Download CCOD CSV from HMLR API
         run: |
-          echo "Downloading CCOD data from HMLR..."
-          curl -L --max-redirs 20 --retry 3 --retry-delay 10 \
-            -o /tmp/ccod_full.zip \
-            "https://use-land-property-data.service.gov.uk/datasets/ccod/download/full"
+          echo "Downloading CCOD data via HMLR API..."
+          curl -L \
+                        -o /tmp/ccod_full.zip \
+            "https://use-land-property-data.service.gov.uk/datasets/ccod/download/full?key=${{ secrets.HMLR_API_KEY }}"
+
+          
+          echo "Checking download..."
+          ls -lh /tmp/ccod_full.zip
+          
+          echo "Unzipping..."
           unzip -o /tmp/ccod_full.zip -d /tmp/ccod/
+          
           CCOD_FILE=$(find /tmp/ccod/ -name "*.csv" | head -1)
+          echo "Found CSV: $CCOD_FILE"
           echo "CCOD_FILE=$CCOD_FILE" >> $GITHUB_ENV
 
       - name: Import CCOD data into Neon PostgreSQL
@@ -60,3 +68,11 @@ jobs:
           "
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+```
+
+Then in terminal:
+```
+cd Desktop/landowner
+git add .
+git commit -m "Use HMLR API key for CCOD download"
+git push
