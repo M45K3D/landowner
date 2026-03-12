@@ -31,7 +31,7 @@ export function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
   try {
     // Handle DD/MM/YYYY format common in HMLR datasets
-    const ddmmyyyy = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    const ddmmyyyy = dateStr.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
     if (ddmmyyyy) {
       const [, dd, mm, yyyy] = ddmmyyyy;
       const d = new Date(`${yyyy}-${mm}-${dd}`);
