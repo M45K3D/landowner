@@ -60,7 +60,7 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
 
   useEffect(() => {
     if (!companyNumber || !expanded) return;
-    if (profile) return;
+    if (profile) return; // already loaded
 
     setLoading(true);
     setError(null);
@@ -85,6 +85,7 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
 
   return (
     <div className="mt-3 rounded-xl border border-slate-700/60 bg-slate-900/80 overflow-hidden">
+      {/* Toggle header */}
       <button
         onClick={() => setExpanded(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-800/60 transition-colors"
@@ -109,6 +110,7 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-slate-800">
+          {/* Loading */}
           {loading && (
             <div className="pt-4 flex items-center gap-2 text-slate-500 text-sm">
               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -119,6 +121,7 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
             </div>
           )}
 
+          {/* Error */}
           {error && (
             <div className="pt-4 text-sm text-red-400 flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,8 +132,10 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
             </div>
           )}
 
+          {/* Content */}
           {!loading && !error && profile && (
             <div className="pt-4 space-y-4">
+              {/* Identity */}
               <div>
                 <p className="text-slate-100 font-semibold text-[15px] leading-tight">{profile.company_name}</p>
                 <p className="text-slate-500 text-xs mt-0.5 font-mono">{profile.company_number}</p>
@@ -145,6 +150,7 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
                 )}
               </div>
 
+              {/* Key dates */}
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: 'Incorporated', value: fmtDate(profile.date_of_creation) },
@@ -159,6 +165,7 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
                 ))}
               </div>
 
+              {/* Recent filings */}
               {filing?.items && filing.items.length > 0 && (
                 <div>
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">
@@ -177,12 +184,13 @@ export default function CompanyFinancialsPanel({ companyNumber }: CompanyFinanci
                 </div>
               )}
 
-              
+              {/* CH link */}
+              <a
                 href={`https://find-and-update.company-information.service.gov.uk/company/${companyNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+                className={'inline-flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 transition-colors'}
               >
                 View full profile on Companies House
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
