@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CompanyGroupData } from '@/types';
 import PropertyCard, { TenureBadge, formatDate, hmlrUrl } from './PropertyCard';
+import CompanyFinancialsPanel from './CompanyFinancialsPanel';
 
 interface CompanyGroupProps {
   group: CompanyGroupData;
@@ -58,6 +59,7 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
   ).length;
 
   const chUrl = companiesHouseUrl(group.company_number);
+  const formattedNumber = formatCompanyNumber(group.company_number);
   const propertyCount = group.properties.length;
 
   return (
@@ -84,7 +86,7 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
                   bg-slate-800 border border-slate-700 px-2 py-0.5 rounded transition-colors"
                 title="View on Companies House"
               >
-                #{formatCompanyNumber(group.company_number)}
+                #{formattedNumber}
                 <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -143,6 +145,13 @@ export default function CompanyGroup({ group }: CompanyGroupProps) {
           </div>
         </div>
       </button>
+
+      {/* Companies House financials panel — shown when expanded */}
+      {expanded && (
+        <div className="px-5 pb-2">
+          <CompanyFinancialsPanel companyNumber={formattedNumber} />
+        </div>
+      )}
 
       {/* Properties panel */}
       {expanded && (
