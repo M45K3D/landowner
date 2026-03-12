@@ -1,0 +1,62 @@
+name: Monthly CCOD Data Update
+
+on:
+  schedule:
+    - cron: '0 2 5 * *'
+  workflow_dispatch:
+
+jobs:
+  update-ccod:
+    name: Download & Import CCOD Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CH_API_KEY: ${{ secrets.CH_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download CCOD CSV from HMLR
+        run: |
+          echo "Downloading CCOD data from HMLR..."
+          curl -L --retry 3 --retry-delay 10 \
+            -o /tmp/ccod_full.zip \
+            "https://use-land-property-data.service.gov.uk/datasets/ccod/download/full"
+          unzip -o /tmp/ccod_full.zip -d /tmp/ccod/
+          CCOD_FILE=$(find /tmp/ccod/ -name "*.csv" | head -1)
+          echo "CCOD_FILE=$CCOD_FILE" >> $GITHUB_ENV
+
+      - name: Import CCOD data into Neon PostgreSQL
+        run: node scripts/import-ccod.js "${{ env.CCOD_FILE }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Rebuild search indexes
+        run: node scripts/rebuild-indexes.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Verify row count post-import
+        run: |
+          node -e "
+            const { Pool } = require('pg');
+            const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+            pool.query('SELECT COUNT(*) FROM ccod_properties').then(r => {
+              console.log('Row count:', r.rows[0].count);
+              pool.end();
+            }).catch(e => { console.error(e); process.exit(1); });
+          "
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
