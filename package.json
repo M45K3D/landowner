@@ -13,11 +13,13 @@
     "@types/pg": "^8.18.0",
     "next": "^16.1.6",
     "pg": "^8.20.0",
+    "pg-copy-streams": "^7.0.0",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg-copy-streams": "^1.2.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
